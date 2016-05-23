@@ -95,9 +95,9 @@ struct mat3 {
   vec3 operator * (const vec3 &vec) {
     vec3 result;
 
-    result.x = matrix[0] * vec.x + matrix[1] * vec.x + matrix[2] * vec.x;
-    result.y = matrix[3] * vec.y + matrix[4] * vec.x + matrix[5] * vec.y;
-    result.z = matrix[6] * vec.y + matrix[7] * vec.x + matrix[8] * vec.z;
+    result.x = matrix[0] * vec.x + matrix[1] * vec.y + matrix[2] * vec.z;
+    result.y = matrix[3] * vec.x + matrix[4] * vec.y + matrix[5] * vec.z;
+    result.z = matrix[6] * vec.x + matrix[7] * vec.y + matrix[8] * vec.z;
 
     return result;
   }
@@ -186,8 +186,8 @@ int main() {
     //
 
     time = c.getElapsedTime();
-    float cos_y = cos(time.asMilliseconds() * 0.001f);
-    float sin_y = sin(time.asMilliseconds() * 0.001f);
+    float cos_y = cos(time.asMilliseconds() * 0.0001f);
+    float sin_y = sin(time.asMilliseconds() * 0.0001f);
     // X axis
     /*rotation.matrix[4] = cos_y;
     rotation.matrix[5] = -sin_y;
@@ -195,21 +195,22 @@ int main() {
     rotation.matrix[8] = cos_y;*/
     
     // Y axis
-    /*rotation.matrix[0] = cos_y;
+    rotation.matrix[0] = cos_y;
     rotation.matrix[2] = sin_y;
     rotation.matrix[6] = -sin_y;
-    rotation.matrix[8] = cos_y;*/
+    rotation.matrix[8] = cos_y;
 
     // Z axis
-    rotation.matrix[0] = cos_y;
+    /*rotation.matrix[0] = cos_y;
     rotation.matrix[1] = -sin_y;
     rotation.matrix[3] = sin_y;
-    rotation.matrix[4] = cos_y;
+    rotation.matrix[4] = cos_y;*/
 
     for (int i = -half_height; i < half_height; ++i) {
       for (int j = -half_width; j < half_width; ++j) {
+        //vec3 pixel = vec3(j * cos_y - i * sin_y, j * sin_y + i * cos_y, plane_dist);
         vec3 pixel = vec3(j, i, plane_dist);
-        //pixel = rotation * pixel;
+        pixel = rotation * pixel;
 
         vec3 d = pixel / pixel.norm();
         // d.z goes [-1.0f, 0.0f) -->
