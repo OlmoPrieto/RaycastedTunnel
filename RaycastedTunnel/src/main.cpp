@@ -45,6 +45,15 @@ struct vec3 {
     return result;
   }
 
+  vec3 operator * (float factor) {
+    vec3 result;
+    result.x = x * factor;
+    result.y = y * factor;
+    result.z = z * factor;
+
+    return result;
+  }
+
   float norm() {
     return sqrt(pow(x, 2) + pow(y, 2) + pow(z, 2));
   }
@@ -137,20 +146,46 @@ int main() {
     for (int i = -half_height; i < half_height; ++i) {
       for (int j = -half_width; j < half_width; ++j) {
         vec3 pixel = vec3(j, i, plane_dist);
-
+        
         vec3 d = pixel / pixel.norm();
-
+        // d.z goes [-1.0f, 0.0f) -->
+                
         float t = cylinder_radius / sqrt(d.x * d.x + d.y * d.y);
         
         float angle = atan2(d.x, d.y);
+        //float angle = atan2(j, i);  // is the same
+        
+        int _u = d.z * 511;
+        int _v = (angle * 511) / (3.14159f * 2.0f);
+        
+        uint32 u;
+        uint32 v;
+        
+        u = abs(_u);
 
-        uint32 u = abs(d.z * 511);
-        uint32 v = abs((angle * 511) / (3.14159 * 2));
-        
-        u *= 2;
-        v *= 2;
-        
+        if (_v < 0) {
+          v = 511 - abs(_v);
+        } else {
+          v = _v;
+        }
+        // if not doing this, if doing: uint32 v = abs(blablabla) 
+        // the texture gets repeated on the half of the cylinder
+
+        //u *= 10; // each * x is a repetition on the length of the cylinder
+        //u %= 512; // got to do this to clamp u to correct texture values
+
         RGBColor color = image2.getPixel(u, v);
+
+        // "tunel" effect
+        color.R = (color.R * (1.0f + d.z));
+        color.G = (color.G * (1.0f + d.z));
+        color.B = (color.B * (1.0f + d.z));
+
+        if (d.z < -0.6f) {
+          color.R = 0;
+          color.G = 0;
+          color.B = 0;
+        }
 
         putPixel(j + half_width, i + half_height, color);
       }
