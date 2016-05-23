@@ -21,6 +21,7 @@ sf::Texture texture;
 sf::Image image2;
 sf::Texture texture2;
 
+// [vec3]
 struct vec3 {
   vec3(){}
   vec3(float _x, float _y, float _z) {
@@ -70,7 +71,41 @@ struct vec3 {
   float y;
   float z;
 };
+// [vec3]
 
+struct mat3 {
+  mat3() {
+    matrix[0] = 1;
+    matrix[1] = 0;
+    matrix[2] = 0;
+
+    matrix[3] = 0;
+    matrix[4] = 1;
+    matrix[5] = 0;
+
+    matrix[6] = 0;
+    matrix[7] = 0;
+    matrix[8] = 1;
+  }
+
+  float operator [](uint32 index) {
+    return matrix[index];
+  }
+
+  vec3 operator * (const vec3 &vec) {
+    vec3 result;
+
+    result.x = matrix[0] * vec.x + matrix[1] * vec.x + matrix[2] * vec.x;
+    result.y = matrix[3] * vec.y + matrix[4] * vec.x + matrix[5] * vec.y;
+    result.z = matrix[6] * vec.y + matrix[7] * vec.x + matrix[8] * vec.z;
+
+    return result;
+  }
+
+  float matrix[9];
+};
+
+// [RGBColor]
 struct RGBColor {
   RGBColor() {}
   RGBColor(byte _R, byte _G, byte _B) {
@@ -92,6 +127,8 @@ struct RGBColor {
   byte G;
   byte B;
 };
+// [RGBColor]
+
 
 void putPixel(uint32 x, uint32 y, const RGBColor &color) {
   int p = (x + width * y) * 4;
@@ -125,6 +162,10 @@ int main() {
   int half_width = width / 2;
   int half_height = height / 2;
 
+  mat3 rotation;
+  sf::Clock c;
+  sf::Time time = c.getElapsedTime();
+
   while (window.isOpen()) {
 
     sf::Event event;
@@ -143,10 +184,33 @@ int main() {
 
     // [UPDATE]
     //
+
+    time = c.getElapsedTime();
+    float cos_y = cos(time.asMilliseconds() * 0.001f);
+    float sin_y = sin(time.asMilliseconds() * 0.001f);
+    // X axis
+    /*rotation.matrix[4] = cos_y;
+    rotation.matrix[5] = -sin_y;
+    rotation.matrix[7] = sin_y;
+    rotation.matrix[8] = cos_y;*/
+    
+    // Y axis
+    /*rotation.matrix[0] = cos_y;
+    rotation.matrix[2] = sin_y;
+    rotation.matrix[6] = -sin_y;
+    rotation.matrix[8] = cos_y;*/
+
+    // Z axis
+    rotation.matrix[0] = cos_y;
+    rotation.matrix[1] = -sin_y;
+    rotation.matrix[3] = sin_y;
+    rotation.matrix[4] = cos_y;
+
     for (int i = -half_height; i < half_height; ++i) {
       for (int j = -half_width; j < half_width; ++j) {
         vec3 pixel = vec3(j, i, plane_dist);
-        
+        //pixel = rotation * pixel;
+
         vec3 d = pixel / pixel.norm();
         // d.z goes [-1.0f, 0.0f) -->
                 
@@ -177,7 +241,7 @@ int main() {
         RGBColor color = image2.getPixel(u, v);
 
         // "tunel" effect
-        color.R = (color.R * (1.0f + d.z));
+        /*color.R = (color.R * (1.0f + d.z));
         color.G = (color.G * (1.0f + d.z));
         color.B = (color.B * (1.0f + d.z));
 
@@ -185,7 +249,7 @@ int main() {
           color.R = 0;
           color.G = 0;
           color.B = 0;
-        }
+        }*/
 
         putPixel(j + half_width, i + half_height, color);
       }
