@@ -10,8 +10,8 @@
 typedef unsigned int uint32;
 typedef unsigned char byte;
 
-const uint32 width = 800;
-const uint32 height = 600;
+const uint32 width = 512;
+const uint32 height = 512;
 
 byte *data_array = NULL;
 sf::Image image;
@@ -155,12 +155,19 @@ int main() {
   image2.loadFromFile("resources/hello_kitty.jpg");
   const byte *image2_data = image2.getPixelsPtr();
 
-  float fov = 60.0f;
+  float fov = 45.0f;
   float plane_dist = (width / 2.0f) / tan(fov / 2.0f);
   float cylinder_radius = 10.0f;
 
+  vec3 top_left(-1.0f, 1.0f, plane_dist);
+  vec3 top_right(1.0f, 1.0f, plane_dist);
+  vec3 bottom_left(-1.0f, -1.0f, plane_dist);
+  vec3 bottom_right(1.0f, -1.0f, plane_dist);
+
   int half_width = width / 2;
   int half_height = height / 2;
+
+  float step = 0.015625f;
 
   mat3 rotation;
   sf::Clock c;
@@ -206,27 +213,32 @@ int main() {
     rotation.matrix[3] = sin_y;
     rotation.matrix[4] = cos_y;*/
 
-    for (int i = -half_height; i < half_height; ++i) {
-      for (int j = -half_width; j < half_width; ++j) {
-        //vec3 pixel = vec3(j * cos_y - i * sin_y, j * sin_y + i * cos_y, plane_dist);
-        vec3 pixel = vec3(j, i, plane_dist);
-        pixel = rotation * pixel;
+    for (float i = top_left.y; i > bottom_left.y; i -= step) { 
+      for (float j = top_left.x; j < top_right.x; j += step) {
+        vec3 pixel = vec3(j * half_width, i * half_height, plane_dist);
+        vec3 pixel_next = vec3(j * half_width + step, i * half_height, plane_dist);
 
         vec3 d = pixel / pixel.norm();
-        // d.z goes [-1.0f, 0.0f) -->
+        vec3 d_next = pixel_next / pixel_next.norm();
                 
         float t = cylinder_radius / sqrt(d.x * d.x + d.y * d.y);
         
         float angle = atan2(d.x, d.y);
-        //float angle = atan2(j, i);  // is the same
+        float angle_next = atan2(d_next.x, d_next.y);
         
         int _u = d.z * 511;
         int _v = (angle * 511) / (3.14159f * 2.0f);
+
+        int _u_next = d_next.z * 511;
+        int _v_next = (angle * 511) / (3.14159f * 2.0f);
         
         uint32 u;
         uint32 v;
+        uint32 u_next;
+        uint32 v_next;
         
         u = abs(_u);
+        //v = abs(_v);
 
         if (_v < 0) {
           v = 511 - abs(_v);
@@ -236,25 +248,24 @@ int main() {
         // if not doing this, if doing: uint32 v = abs(blablabla) 
         // the texture gets repeated on the half of the cylinder
 
-        //u *= 10; // each * x is a repetition on the length of the cylinder
-        //u %= 512; // got to do this to clamp u to correct texture values
+
 
         RGBColor color = image2.getPixel(u, v);
 
-        // "tunel" effect
-        /*color.R = (color.R * (1.0f + d.z));
-        color.G = (color.G * (1.0f + d.z));
-        color.B = (color.B * (1.0f + d.z));
-
-        if (d.z < -0.6f) {
-          color.R = 0;
-          color.G = 0;
-          color.B = 0;
-        }*/
-
-        putPixel(j + half_width, i + half_height, color);
+        putPixel((uint32)(j * half_width + half_width), (uint32)(i * (-half_height) + half_height), color);
       }
     }
+
+    // "tunel" effect
+    /*color.R = (color.R * (1.0f + d.z));
+    color.G = (color.G * (1.0f + d.z));
+    color.B = (color.B * (1.0f + d.z));*/
+
+    /*if (d.z < -0.6f) {
+    color.R = 0;
+    color.G = 0;
+    color.B = 0;
+    }*/
     // [UPDATE]
 
 
