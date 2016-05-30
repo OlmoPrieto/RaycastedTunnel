@@ -37,6 +37,15 @@ struct vec3 {
     return result;
   }
 
+  vec3 operator +(const vec3 &other) {
+    vec3 result;
+    result.x = x + other.x;
+    result.y = y + other.y;
+    result.z = z + other.z;
+
+    return result;
+  }
+
   vec3 operator / (float factor) {
     vec3 result;
     result.x = x / factor;
@@ -141,6 +150,11 @@ void putPixel(uint32 x, uint32 y, const RGBColor &color) {
   image.setPixel(x, y, sf::Color(color.R, color.G, color.B, 255));
 }
 
+// LERP = (x * a) + (y * (1 - a))
+vec3 lerp(vec3 a, vec3 b, float alpha){
+  return vec3((a * alpha) + (b * (1.0f - alpha)));
+}
+
 int main() {
   // create the window
   sf::RenderWindow window(sf::VideoMode(width, height), "RaycastedTunnel");
@@ -156,7 +170,7 @@ int main() {
   const byte *image2_data = image2.getPixelsPtr();
 
   float fov = 45.0f;
-  float plane_dist = (width / 2.0f) / tan(fov / 2.0f);
+  float plane_dist = (0.5f * (float)width) / tan(fov / 2.0f);
   float cylinder_radius = 10.0f;
 
   vec3 top_left(-1.0f, 1.0f, plane_dist);
@@ -213,29 +227,47 @@ int main() {
     rotation.matrix[3] = sin_y;
     rotation.matrix[4] = cos_y;*/
 
-    for (float i = top_left.y; i > bottom_left.y; i -= step) { 
-      for (float j = top_left.x; j < top_right.x; j += step) {
-        vec3 pixel = vec3(j * half_width, i * half_height, plane_dist);
-        vec3 pixel_next = vec3(j * half_width + step, i * half_height, plane_dist);
+    /*vec3 top_left(-1.0f, 1.0f, plane_dist);
+    vec3 top_right(1.0f, 1.0f, plane_dist);
+    vec3 bottom_left(-1.0f, -1.0f, plane_dist);
+    vec3 bottom_right(1.0f, -1.0f, plane_dist);*/
 
-        vec3 d = pixel / pixel.norm();
-        vec3 d_next = pixel_next / pixel_next.norm();
+    for (float i = top_left.y; i > bottom_left.y; i -= step) {
+      // LERP = (x * a) + (y * (1 - a))
+      /*
+        LERP left = top_left bottom_left
+        LERP right = top_right bottom_right
+        delta_x = (right.x - left.x ) / w;
+        delta_y = (right.y - left.y) / w;
+        delta_z = (right.z - left.z) / w;
+      */
+
+      vec3 left = lerp(top_left, bottom_left, i);
+      vec3 right = lerp(top_right, bottom_right, i);
+
+      float delta_x = (right.x - left.x) / width;
+      float delta_y = (right.y - left.y) / width;
+      float delta_z = (right.z - left.z);
+
+      for (float j = top_left.x; j < top_right.x; j += step) {
+        //vec3 pixel = vec3(j * half_width, i * half_height, plane_dist);
+        vec3 ray = left;
+        
+        left.x += delta_x;
+        left.y += delta_y;
+        left.z += delta_z;
+
+        vec3 d = ray / ray.norm();
                 
         float t = cylinder_radius / sqrt(d.x * d.x + d.y * d.y);
-        
-        float angle = atan2(d.x, d.y);
-        float angle_next = atan2(d_next.x, d_next.y);
-        
-        int _u = d.z * 511;
-        int _v = (angle * 511) / (3.14159f * 2.0f);
 
-        int _u_next = d_next.z * 511;
-        int _v_next = (angle * 511) / (3.14159f * 2.0f);
+        float angle = atan2(d.x, d.y);
+        
+        int _u = d.z  * 511;
+        int _v = (angle * 511) / (3.14159f * 2.0f);
         
         uint32 u;
         uint32 v;
-        uint32 u_next;
-        uint32 v_next;
         
         u = abs(_u);
         //v = abs(_v);
@@ -245,10 +277,6 @@ int main() {
         } else {
           v = _v;
         }
-        // if not doing this, if doing: uint32 v = abs(blablabla) 
-        // the texture gets repeated on the half of the cylinder
-
-
 
         RGBColor color = image2.getPixel(u, v);
 
