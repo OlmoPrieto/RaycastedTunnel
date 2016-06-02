@@ -5,7 +5,7 @@
 
 #include <SFML/Graphics.hpp>
 
-#define PI2 3.14159 * 2
+#define PI 3.14159
 
 typedef unsigned int uint32;
 typedef unsigned char byte;
@@ -174,6 +174,10 @@ vec3 lerp(vec3 a, vec3 b, float alpha){
   return vec3(a + alpha * (b - a));
 }
 
+float angleToRadians(float a) {
+  return a * PI / 180.0f;
+}
+
 int main() {
   // create the window
   sf::RenderWindow window(sf::VideoMode(width, height), "RaycastedTunnel");
@@ -185,27 +189,59 @@ int main() {
   texture.update(image);
   sprite.setTexture(texture);
 
-  image2.loadFromFile("resources/hello_kitty.jpg");
+  image2.loadFromFile("resources/nicolas-cage.jpg");
   const byte *image2_data = image2.getPixelsPtr();
 
-  float fov = 45.0f;
+  float fov = 90.0f;
   float plane_dist = (0.5f * (float)width) / tan(fov / 2.0f);
-  float cylinder_radius = 10.0f;
+  float cylinder_radius = 100.0f;
 
-  vec3 top_left(-1.0f, 1.0f, plane_dist);
+  mat3 rotation;
+  // X axis
+  /*rotation.matrix[4] = cos(fov * 0.5f);
+  rotation.matrix[5] = -sin(fov * 0.5f);
+  rotation.matrix[7] = sin(fov * 0.5f);
+  rotation.matrix[8] = cos(fov * 0.5f);*/
+
+  // Y axis
+  /*rotation.matrix[0] = cos(fov * 0.5f);
+  rotation.matrix[2] = sin(fov * 0.5f);
+  rotation.matrix[6] = -sin(fov * 0.5f);
+  rotation.matrix[8] = cos(fov * 0.5f);*/
+
+  // Z axis
+  /*rotation.matrix[0] = cos_y;
+  rotation.matrix[1] = -sin_y;
+  rotation.matrix[3] = sin_y;
+  rotation.matrix[4] = cos_y;*/
+
+  /*vec3 top_left(-1.0f, 1.0f, plane_dist);
   vec3 top_right(1.0f, 1.0f, plane_dist);
   vec3 bottom_left(-1.0f, -1.0f, plane_dist);
-  vec3 bottom_right(1.0f, -1.0f, plane_dist);
+  vec3 bottom_right(1.0f, -1.0f, plane_dist);*/
+  
+  float fov_r = angleToRadians(fov * 0.5f);
+
+  vec3 right_vector(cos(fov_r), 0.0f, sin(fov_r));
+  vec3 left_vector(-cos(fov_r), 0.0f, sin(fov_r));
+
+  rotation.matrix[4] = cos(fov_r);
+  rotation.matrix[5] = -sin(fov_r);
+  rotation.matrix[7] = sin(fov_r);
+  rotation.matrix[8] = cos(fov_r);
+  vec3 top_left(rotation * left_vector);
+  vec3 top_right(rotation * right_vector);
+
+  // X axis
+  rotation.matrix[4] = cos(-fov_r);
+  rotation.matrix[5] = -sin(-fov_r);
+  rotation.matrix[7] = sin(-fov_r);
+  rotation.matrix[8] = cos(-fov_r);
+  vec3 bottom_left(rotation * left_vector);
+  vec3 bottom_right(rotation * right_vector);
 
   int half_width = width / 2;
   int half_height = height / 2;
-
-  //float step = 0.015625f;
-  float step = 0.0045625f;
-
-  mat3 rotation;
-  sf::Clock c;
-  sf::Time time = c.getElapsedTime();
 
   while (window.isOpen()) {
 
@@ -226,97 +262,55 @@ int main() {
     // [UPDATE]
     //
 
-    time = c.getElapsedTime();
-    float cos_y = cos(time.asMilliseconds() * 0.0001f);
-    float sin_y = sin(time.asMilliseconds() * 0.0001f);
-    // X axis
-    /*rotation.matrix[4] = cos_y;
-    rotation.matrix[5] = -sin_y;
-    rotation.matrix[7] = sin_y;
-    rotation.matrix[8] = cos_y;*/
-    
-    // Y axis
-    rotation.matrix[0] = cos_y;
-    rotation.matrix[2] = sin_y;
-    rotation.matrix[6] = -sin_y;
-    rotation.matrix[8] = cos_y;
-
-    // Z axis
-    /*rotation.matrix[0] = cos_y;
-    rotation.matrix[1] = -sin_y;
-    rotation.matrix[3] = sin_y;
-    rotation.matrix[4] = cos_y;*/
-
-    /*vec3 top_left(-1.0f, 1.0f, plane_dist);
-    vec3 top_right(1.0f, 1.0f, plane_dist);
-    vec3 bottom_left(-1.0f, -1.0f, plane_dist);
-    vec3 bottom_right(1.0f, -1.0f, plane_dist);*/
-
-    for (float i = top_left.y; i > bottom_left.y; i -= step) {
+    //int x, y;
+    for (int y = 0; y < height; y++) {
       // LERP = (x * a) + (y * (1 - a))
-      /*
-        LERP left = top_left bottom_left
-        LERP right = top_right bottom_right
-        delta_x = (right.x - left.x ) / w;
-        delta_y = (right.y - left.y) / w;
-        delta_z = (right.z - left.z) / w;
-      */
 
       // what lerp() does here is just substract i in the corresponding coordinate
-      vec3 left = lerp(top_left, bottom_left, 1.0f - (i * 0.5f + 0.5f));
-      vec3 right = lerp(top_right, bottom_right, 1.0f - (i * 0.5f + 0.5f));
+      float alpha = ((float)y) / (float)height;
+      vec3 left = lerp(top_left, bottom_left, alpha);
+      vec3 right = lerp(top_right, bottom_right, alpha);
 
-      float delta_x = (right.x - left.x) / width;
-      float delta_y = (right.y - left.y) / width;
-      float delta_z = (right.z - left.z) / width;
+      float delta_x = (right.x - left.x) / (float)width;
+      float delta_y = (right.y - left.y) / (float)width;
+      float delta_z = (right.z - left.z) / (float)width;
 
-      for (float j = top_left.x; j < top_right.x; j += step) {
-        //vec3 pixel = vec3(j * half_width, i * half_height, plane_dist);
-        vec3 ray = left;
+      vec3 ray = left;
+      for (int x = 0; x < width; x++) {   
+        float vec_len = sqrt(ray.x * ray.x + ray.y * ray.y);
+        if (vec_len != 0.0f) {
+          float t = cylinder_radius / vec_len;
         
+          float angle = atan2(ray.x, ray.y);
+        
+          int _u = ray.z * t; // ??
+          int _v = (angle * 511) / (PI * 2.0f);
+        
+          uint32 u;
+          uint32 v;
+
+          u = abs(_u);
+          //v = abs(_v);
+
+          if (_v < 0) {
+            v = 511 - abs(_v);
+          } else {
+            v = _v;
+          }
+          //v = abs(_v);
+          u &= 511;
+          v &= 511;
+
+          RGBColor color = image2.getPixel(u, v);
+
+          putPixel((uint32)(x), (uint32)(y), color);
+        }
+
         ray.x += delta_x;
         ray.y += delta_y;
         ray.z += delta_z;
-
-        vec3 d = ray / ray.norm();
-        
-        float t = cylinder_radius / sqrt(d.x * d.x + d.y * d.y);
-
-        float angle = atan2(d.x, d.y);
-        
-        int _u = d.z * t;
-        int _v = (angle * 511) / (3.14159f * 2.0f);
-        
-        uint32 u;
-        uint32 v;
-        
-        u = abs(_u);
-        //v = abs(_v);
-
-        if (_v < 0) {
-          v = 511 - abs(_v);
-        } else {
-          v = _v;
-        }
-        //v = abs(_v);
-
-        RGBColor color = image2.getPixel(u, v);
-
-        putPixel((uint32)(j * half_width + half_width), (uint32)(i * (-half_height) + half_height), color);
-        //putPixel((uint32)(ray.x * half_width + half_width), (uint32)(ray.y * (-half_height) + half_height), color);
       }
     }
-
-    // "tunel" effect
-    /*color.R = (color.R * (1.0f + d.z));
-    color.G = (color.G * (1.0f + d.z));
-    color.B = (color.B * (1.0f + d.z));*/
-
-    /*if (d.z < -0.6f) {
-    color.R = 0;
-    color.G = 0;
-    color.B = 0;
-    }*/
     // [UPDATE]
 
 
