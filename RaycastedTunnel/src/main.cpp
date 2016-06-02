@@ -64,6 +64,14 @@ struct vec3 {
     return result;
   }
 
+  vec3 operator = (const vec3 &other) {
+    x = other.x;
+    y = other.y;
+    z = other.z;
+
+    return *this;
+  }
+
   float norm() {
     return sqrt(pow(x, 2) + pow(y, 2) + pow(z, 2));
   }
@@ -81,6 +89,10 @@ struct vec3 {
   float z;
 };
 // [vec3]
+vec3 operator * (float f, const vec3 &vec) {
+  vec3 result = vec;
+  return result * f;
+}
 
 struct mat3 {
   mat3() {
@@ -140,6 +152,12 @@ struct RGBColor {
 
 
 void putPixel(uint32 x, uint32 y, const RGBColor &color) {
+  /*if (x > 511) {
+    x = 0;
+  }*/
+  /*if (y > 511) {
+    y = 0;
+  }*/
   int p = (x + width * y) * 4;
 
   data_array[p] =     color.R;
@@ -152,7 +170,8 @@ void putPixel(uint32 x, uint32 y, const RGBColor &color) {
 
 // LERP = (x * a) + (y * (1 - a))
 vec3 lerp(vec3 a, vec3 b, float alpha){
-  return vec3((a * alpha) + (b * (1.0f - alpha)));
+  //return vec3((a * alpha) + (b * (1.0f - alpha)));
+  return vec3(a + alpha * (b - a));
 }
 
 int main() {
@@ -181,7 +200,8 @@ int main() {
   int half_width = width / 2;
   int half_height = height / 2;
 
-  float step = 0.015625f;
+  //float step = 0.015625f;
+  float step = 0.0055625f;
 
   mat3 rotation;
   sf::Clock c;
@@ -232,7 +252,7 @@ int main() {
     vec3 bottom_left(-1.0f, -1.0f, plane_dist);
     vec3 bottom_right(1.0f, -1.0f, plane_dist);*/
 
-    for (float i = top_left.y; i > bottom_left.y; i -= step) {
+    for (float i = top_left.y; i >= bottom_left.y; i -= step) {
       // LERP = (x * a) + (y * (1 - a))
       /*
         LERP left = top_left bottom_left
@@ -242,28 +262,29 @@ int main() {
         delta_z = (right.z - left.z) / w;
       */
 
-      vec3 left = lerp(top_left, bottom_left, i);
-      vec3 right = lerp(top_right, bottom_right, i);
+      // what lerp() does here is just substract i in the corresponding coordinate
+      vec3 left = lerp(top_left, bottom_left, 1.0f - (i * 0.5f + 0.5f));
+      vec3 right = lerp(top_right, bottom_right, 1.0f - (i * 0.5f + 0.5f));
 
       float delta_x = (right.x - left.x) / width;
       float delta_y = (right.y - left.y) / width;
-      float delta_z = (right.z - left.z);
+      float delta_z = (right.z - left.z) / width;
 
-      for (float j = top_left.x; j < top_right.x; j += step) {
+      for (float j = top_left.x; j <= top_right.x; j += step) {
         //vec3 pixel = vec3(j * half_width, i * half_height, plane_dist);
         vec3 ray = left;
         
-        left.x += delta_x;
-        left.y += delta_y;
-        left.z += delta_z;
+        ray.x += delta_x;
+        ray.y += delta_y;
+        ray.z += delta_z;
 
         vec3 d = ray / ray.norm();
-                
+        
         float t = cylinder_radius / sqrt(d.x * d.x + d.y * d.y);
 
-        float angle = atan2(d.x, d.y);
+        float angle = atan2(d.x * t, d.y * t);
         
-        int _u = d.z  * 511;
+        int _u = d.z * 511;
         int _v = (angle * 511) / (3.14159f * 2.0f);
         
         uint32 u;
@@ -277,10 +298,12 @@ int main() {
         } else {
           v = _v;
         }
+        //v = abs(_v);
 
         RGBColor color = image2.getPixel(u, v);
 
         putPixel((uint32)(j * half_width + half_width), (uint32)(i * (-half_height) + half_height), color);
+        //putPixel((uint32)(ray.x * half_width + half_width), (uint32)(ray.y * (-half_height) + half_height), color);
       }
     }
 
