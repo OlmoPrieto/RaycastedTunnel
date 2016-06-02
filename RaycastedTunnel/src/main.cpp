@@ -13,6 +13,8 @@ typedef unsigned char byte;
 const uint32 width = 512;
 const uint32 height = 512;
 
+float light_factor = 2000.0f;
+
 byte *data_array = NULL;
 sf::Image image;
 sf::Sprite sprite;
@@ -144,6 +146,15 @@ struct RGBColor {
     B = sf_color.b;
   }
 
+  RGBColor operator * (float f){
+    RGBColor result;
+    result.R = R * f;
+    result.G = G * f;
+    result.B = B * f;
+
+    return result;
+  }
+
   byte R;
   byte G;
   byte B;
@@ -192,7 +203,7 @@ int main() {
   image2.loadFromFile("resources/nicolas-cage.jpg");
   const byte *image2_data = image2.getPixelsPtr();
 
-  float fov = 90.0f;
+  float fov = 30.0f;
   float plane_dist = (0.5f * (float)width) / tan(fov / 2.0f);
   float cylinder_radius = 100.0f;
 
@@ -222,8 +233,8 @@ int main() {
   
   float fov_r = angleToRadians(fov * 0.5f);
 
-  vec3 right_vector(cos(fov_r), 0.0f, sin(fov_r));
-  vec3 left_vector(-cos(fov_r), 0.0f, sin(fov_r));
+  vec3 right_vector(sin(fov_r), 0.0f, cos(fov_r));
+  vec3 left_vector(-sin(fov_r), 0.0f, cos(fov_r));
 
   rotation.matrix[4] = cos(fov_r);
   rotation.matrix[5] = -sin(fov_r);
@@ -240,14 +251,18 @@ int main() {
   vec3 bottom_left(rotation * left_vector);
   vec3 bottom_right(rotation * right_vector);
 
+  rotation = mat3();
+
   int half_width = width / 2;
   int half_height = height / 2;
+
+  sf::Clock c;
+  sf::Time time = c.getElapsedTime();
 
   while (window.isOpen()) {
 
     sf::Event event;
     while (window.pollEvent(event)) {
-
       if (event.type == sf::Event::Closed) {
         window.close();
       }
@@ -261,13 +276,29 @@ int main() {
 
     // [UPDATE]
     //
+    
+    time = c.getElapsedTime();
+    float cos_y = cos(angleToRadians(time.asMilliseconds() * 0.01f));
+    float sin_y = sin(angleToRadians(time.asMilliseconds() * 0.01f));
 
-    //int x, y;
+    // Y axis
+    
+    rotation.matrix[0] = cos_y;
+    rotation.matrix[2] = sin_y;
+    rotation.matrix[6] = -sin_y;
+    rotation.matrix[8] = cos_y ;
+
+    vec3 top_right_ = rotation * top_right;
+    vec3 top_left_ = rotation * top_left;
+    vec3 bottom_right_ = rotation * bottom_right;
+    vec3 bottom_left_ = rotation * bottom_left;
+
     for (int y = 0; y < height; y++) {
-      // LERP = (x * a) + (y * (1 - a))
-
-      // what lerp() does here is just substract i in the corresponding coordinate
       float alpha = ((float)y) / (float)height;
+
+      /*vec3 left = lerp(top_left_, bottom_left_, alpha);
+      vec3 right = lerp(top_right_, bottom_right_, alpha);*/
+
       vec3 left = lerp(top_left, bottom_left, alpha);
       vec3 right = lerp(top_right, bottom_right, alpha);
 
@@ -276,16 +307,19 @@ int main() {
       float delta_z = (right.z - left.z) / (float)width;
 
       vec3 ray = left;
+
       for (int x = 0; x < width; x++) {   
         float vec_len = sqrt(ray.x * ray.x + ray.y * ray.y);
         if (vec_len != 0.0f) {
           float t = cylinder_radius / vec_len;
         
           float angle = atan2(ray.x, ray.y);
-        
-          int _u = ray.z * t; // ??
+          
+          float depth = ray.z * t;
+
+          int _u = depth;
           int _v = (angle * 511) / (PI * 2.0f);
-        
+
           uint32 u;
           uint32 v;
 
@@ -302,6 +336,10 @@ int main() {
           v &= 511;
 
           RGBColor color = image2.getPixel(u, v);
+          float luminance = (light_factor - depth) / light_factor;
+          if (luminance <= 0) luminance = 0;
+
+          color = color * luminance;
 
           putPixel((uint32)(x), (uint32)(y), color);
         }
