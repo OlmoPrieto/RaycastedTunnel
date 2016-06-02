@@ -258,6 +258,8 @@ int main() {
 
   sf::Clock c;
   sf::Time time = c.getElapsedTime();
+  sf::Time last_time = c.getElapsedTime();
+  float dt = 0.0f;
 
   while (window.isOpen()) {
 
@@ -278,6 +280,9 @@ int main() {
     //
     
     time = c.getElapsedTime();
+    dt = time.asMilliseconds() - last_time.asMilliseconds();
+    printf("dt: %f\n", dt);
+    last_time = time;
     float cos_y = cos(angleToRadians(time.asMilliseconds() * 0.01f));
     float sin_y = sin(angleToRadians(time.asMilliseconds() * 0.01f));
 
@@ -296,11 +301,11 @@ int main() {
     for (int y = 0; y < height; y++) {
       float alpha = ((float)y) / (float)height;
 
-      /*vec3 left = lerp(top_left_, bottom_left_, alpha);
-      vec3 right = lerp(top_right_, bottom_right_, alpha);*/
+      vec3 left = lerp(top_left_, bottom_left_, alpha);
+      vec3 right = lerp(top_right_, bottom_right_, alpha);
 
-      vec3 left = lerp(top_left, bottom_left, alpha);
-      vec3 right = lerp(top_right, bottom_right, alpha);
+      /*vec3 left = lerp(top_left, bottom_left, alpha);
+      vec3 right = lerp(top_right, bottom_right, alpha);*/
 
       float delta_x = (right.x - left.x) / (float)width;
       float delta_y = (right.y - left.y) / (float)width;
@@ -336,8 +341,10 @@ int main() {
           v &= 511;
 
           RGBColor color = image2.getPixel(u, v);
-          float luminance = (light_factor - depth) / light_factor;
-          if (luminance <= 0) luminance = 0;
+          float luminance = (light_factor - abs(depth)) / light_factor;
+          if (luminance <= 0) {
+            luminance = 0.0f;
+          }
 
           color = color * luminance;
 
