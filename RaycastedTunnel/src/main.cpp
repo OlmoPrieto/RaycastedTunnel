@@ -154,8 +154,8 @@ struct RGBColor {
 void putPixel(uint32 x, uint32 y, const RGBColor &color) {
   /*if (x > 511) {
     x = 0;
-  }*/
-  /*if (y > 511) {
+  }
+  if (y > 511) {
     y = 0;
   }*/
   int p = (x + width * y) * 4;
@@ -201,7 +201,7 @@ int main() {
   int half_height = height / 2;
 
   //float step = 0.015625f;
-  float step = 0.0055625f;
+  float step = 0.0045625f;
 
   mat3 rotation;
   sf::Clock c;
@@ -252,7 +252,7 @@ int main() {
     vec3 bottom_left(-1.0f, -1.0f, plane_dist);
     vec3 bottom_right(1.0f, -1.0f, plane_dist);*/
 
-    for (float i = top_left.y; i >= bottom_left.y; i -= step) {
+    for (float i = top_left.y; i > bottom_left.y; i -= step) {
       // LERP = (x * a) + (y * (1 - a))
       /*
         LERP left = top_left bottom_left
@@ -270,7 +270,7 @@ int main() {
       float delta_y = (right.y - left.y) / width;
       float delta_z = (right.z - left.z) / width;
 
-      for (float j = top_left.x; j <= top_right.x; j += step) {
+      for (float j = top_left.x; j < top_right.x; j += step) {
         //vec3 pixel = vec3(j * half_width, i * half_height, plane_dist);
         vec3 ray = left;
         
@@ -282,9 +282,9 @@ int main() {
         
         float t = cylinder_radius / sqrt(d.x * d.x + d.y * d.y);
 
-        float angle = atan2(d.x * t, d.y * t);
+        float angle = atan2(d.x, d.y);
         
-        int _u = d.z * 511;
+        int _u = d.z * t;
         int _v = (angle * 511) / (3.14159f * 2.0f);
         
         uint32 u;
