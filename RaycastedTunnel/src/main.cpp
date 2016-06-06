@@ -200,7 +200,7 @@ int main() {
   texture.update(image);
   sprite.setTexture(texture);
 
-  image2.loadFromFile("resources/nicolas-cage.jpg");
+  image2.loadFromFile("resources/lava.png");
   const byte *image2_data = image2.getPixelsPtr();
 
   float fov = 30.0f;
@@ -261,6 +261,10 @@ int main() {
   sf::Time last_time = c.getElapsedTime();
   float dt = 0.0f;
 
+  vec3 mouse_pos;
+
+
+
   while (window.isOpen()) {
 
     sf::Event event;
@@ -285,13 +289,28 @@ int main() {
     last_time = time;
     float cos_y = cos(angleToRadians(time.asMilliseconds() * 0.01f));
     float sin_y = sin(angleToRadians(time.asMilliseconds() * 0.01f));
+    
+
+    mouse_pos.x = sf::Mouse::getPosition(window).x;
+    //mouse_pos.y = sf::Mouse::getPosition(window).y;
+
+    // Normalize mouse pos
+    mouse_pos.x /= half_width; // -> normalized with half width so we can do a full circle
+    //mouse_pos.y /= height;   // -> not useful
+
 
     // Y axis
-    
-    rotation.matrix[0] = cos_y;
-    rotation.matrix[2] = sin_y;
-    rotation.matrix[6] = -sin_y;
-    rotation.matrix[8] = cos_y ;
+    rotation.matrix[0] = cos(mouse_pos.x);
+    rotation.matrix[2] = sin(mouse_pos.x);
+    rotation.matrix[6] = sin(mouse_pos.x) * (-1);
+    rotation.matrix[8] = cos(mouse_pos.x);
+
+    // Y axis
+    //rotation.matrix[0] = cos_y;
+    //rotation.matrix[2] = sin_y;
+    //rotation.matrix[6] = -sin_y;
+    //rotation.matrix[8] = cos_y ;
+
 
     vec3 top_right_ = rotation * top_right;
     vec3 top_left_ = rotation * top_left;
