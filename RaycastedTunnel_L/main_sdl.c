@@ -241,6 +241,8 @@ int main(int argc, char **argv) {
     vec3 bottom_left_;
     mat3xvec3(&rotation, &bottom_left, &bottom_left_);
     
+    ChronoWatchReset();
+
     // INNER LOOP
     for (int y = 0; y < height; y++) {
       float alpha = (float)y / (float)height;
@@ -310,10 +312,10 @@ int main(int argc, char **argv) {
       }
     }
     //----- Update
-    
+
+    ChronoShow ( "INNER LOOP", surface->w * surface->h);
+
     //----- Draw
-    //static void CopyToSDL (unsigned int *dst, unsigned int *src,
-    //                  uint32 w, uint32 h, uint32 stride)
     CopyToSDL(surface->pixels, framebuffer, surface->w, surface->h, surface->pitch >> 2);
     
     SDL_UnlockSurface(surface);
