@@ -129,3 +129,18 @@ for (int y = 0; y < height; y += 8) {
 		}
 	}
 }
+
+
+
+unsigned char color_r = (0x000000ff & color);
+          color_r  *= luminance;
+          unsigned char color_g = (0x0000ff00 & color) >> 8;
+          color_g *= luminance;
+          unsigned char color_b = (0x00ff0000 & color) >> 16;
+          color_b *= luminance;
+          unsigned char color_a = (0xff000000 & color) >> 24;        
+
+          color = (0xff000000 & (color_a << 24)) | 
+                  (0x00ff0000 & (color_b << 16)) |
+                  (0x0000ff00 & (color_g << 8))  |
+                  (0x000000ff & (color_r));
