@@ -282,6 +282,14 @@ int main(int argc, char **argv) {
 	    float delta_x = (right.x - left.x) / (float)width;
       float delta_y = (right.y - left.y) / (float)width;
       float delta_z = (right.z - left.z) / (float)width;
+      
+      
+      float alpha2 = ((float)y + 8.0f) / (float)height;       
+      vec3 left2 = lerp(&top_left_, &bottom_left_, alpha2);
+      vec3 right2 = lerp(&top_right_, &bottom_right_, alpha2);
+      float delta_y_x = (right2.x - left2.x) / (float)width;
+	    float delta_y_y = (right2.y - left2.y) / (float)width;
+      float delta_y_z = (right2.z - left2.z) / (float)width; 
 	      
       vec3 ray = left;
       //copyVec3(&ray, &left);
@@ -289,29 +297,30 @@ int main(int argc, char **argv) {
 	    for (int x = 0; x < width; x += 8) {
         
         // Top right
-		    vec3 ray_tr; 
+		    vec3 ray_tr;
         ray_tr.x = ray.x + ((float)(x + 8) * delta_x);
-        ray_tr.y = ray.y + ((float)(x + 0) * delta_y); 
+        ray_tr.y = ray.y + ((float)(x + 8) * delta_y);
         ray_tr.z = ray.z + ((float)(x + 8) * delta_z);
-
+        
         // Top left
 		    vec3 ray_tl;
-        ray_tl.x = ray.x + ((float)(x + 0) * delta_x);
-        ray_tl.y = ray.y + ((float)(x + 0) * delta_y);
-        ray_tl.z = ray.z + ((float)(x + 0) * delta_z);
+        ray_tl.x = ray.x + ((float)(x) * delta_x);
+        ray_tl.y = ray.y + ((float)(x) * delta_y);
+        ray_tl.z = ray.z + ((float)(x) * delta_z);
         
         // Bottom right
 		    vec3 ray_br; 
-        ray_br.x = ray.x + ((float)(x + 8) * delta_x);
-        ray_br.y = ray.y + ((float)(x + 8) * delta_y);
-        ray_br.z = ray.z + ((float)(x + 8) * delta_z);
+        ray_br.x = left2.x + ((float)(x + 8) * delta_y_x);
+        ray_br.y = left2.y + ((float)(x + 8) * delta_y_y);
+        ray_br.z = left2.z + ((float)(x + 8) * delta_y_z);
         
         // Bottom left
-		    vec3 ray_bl; 
-        ray_bl.x = ray.x + ((float)(x + 0) * delta_x); 
-        ray_bl.y = ray.y + ((float)(x + 8) * delta_y);
-        ray_bl.z = ray.z + ((float)(x + 4) * delta_z);
-		
+		    vec3 ray_bl;
+        ray_bl.x = left2.x + ((float)(x) * delta_y_x);
+        ray_bl.y = left2.y + ((float)(x) * delta_y_y);
+        ray_bl.z = left2.z + ((float)(x) * delta_y_z);
+	      
+		    
 		    float depth_tr = 0.0f;
 		    float depth_tl = 0.0f;
 		    float depth_br = 0.0f;
@@ -372,19 +381,18 @@ int main(int argc, char **argv) {
 			
 			    dlum = (right_lum - left_lum) / 8.0f;
 			    lum = left_lum;
-          //printf("%f %f\n", left_u, left_v);
+          
 			    for (int dx = 0; dx < 8; dx++) {
 			      //printf("%u %u\n", u, v);
+			      u &= 511;
+			      v &= 511;
 				    uint32 color = GetPixel(u, v);
 				    //color *= lum;
 				
 				    PutPixel(color, x + dx, y + dy);
 				    
 				    //u += du;
-				    //v += dv;
-				    
-				    //printf("%f %f\n", (float)u + du, (float)v + dv);
-				    
+				    //v += dv;				    
 				    u = (uint32)roundf((float)u + du);
 				    v = (uint32)roundf((float)v + dv);
 				    
@@ -399,6 +407,9 @@ int main(int argc, char **argv) {
 			    left_lum += left_dlum;
 			    right_lum += right_dlum;
 		    }
+		    /*ray.x += 8.0f * delta_x;
+	      ray.y += 8.0f * delta_y;
+	      ray.z += 8.0f * delta_z; */ 
 	    }
     }
     //----- Update
