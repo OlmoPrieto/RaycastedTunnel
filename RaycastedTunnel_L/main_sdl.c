@@ -256,10 +256,18 @@ int main(int argc, char **argv) {
     float delta_time = SDL_GetTicks() / 1000;
     last_time = delta_time;
     
+    int x, y;
     // mouse_pos.x = GETFROMWINDOW();
     // mouse_pos.x /= half_width;
+    SDL_GetMouseState(&x, &y);
     
-    //setYRotation(&rotation, mouse_pos.x);
+    
+    mouse_pos.x = x;
+    mouse_pos.x /= half_width;
+    mouse_pos.y = y;
+    
+    setIdentity(&rotation);
+    setYRotation(&rotation, mouse_pos.x);
 
     vec3 top_right_;
     mat3xvec3(&rotation, &top_right, &top_right_);
@@ -276,136 +284,133 @@ int main(int argc, char **argv) {
     for (int y = 0; y < height; y += 8) {
 	    float alpha = (float)y / (float)height;
           
-      vec3 left = lerp(&top_left_, &bottom_left_, alpha);
-      vec3 right = lerp(&top_right_, &bottom_right_, alpha);
+	    vec3 left = lerp(&top_left_, &bottom_left_, alpha);
+	    vec3 right = lerp(&top_right_, &bottom_right_, alpha);
           
-	    float delta_x = (right.x - left.x) / (float)width;
-      float delta_y = (right.y - left.y) / (float)width;
-      float delta_z = (right.z - left.z) / (float)width;
+    	float delta_x = (right.x - left.x) / (float)width;
+    	float delta_y = (right.y - left.y) / (float)width;
+	    float delta_z = (right.z - left.z) / (float)width;
       
       
-      float alpha2 = ((float)y + 8.0f) / (float)height;       
-      vec3 left2 = lerp(&top_left_, &bottom_left_, alpha2);
-      vec3 right2 = lerp(&top_right_, &bottom_right_, alpha2);
-      float delta_y_x = (right2.x - left2.x) / (float)width;
-	    float delta_y_y = (right2.y - left2.y) / (float)width;
-      float delta_y_z = (right2.z - left2.z) / (float)width; 
+	    float alpha2 = ((float)y + 8.0f) / (float)height;       
+	    vec3 left2 = lerp(&top_left_, &bottom_left_, alpha2);
+	    vec3 right2 = lerp(&top_right_, &bottom_right_, alpha2);
+	    float delta_y_x = (right2.x - left2.x) / (float)width;
+    	float delta_y_y = (right2.y - left2.y) / (float)width;
+	    float delta_y_z = (right2.z - left2.z) / (float)width; 
 	      
-      vec3 ray = left;
-      //copyVec3(&ray, &left);
+	    vec3 ray = left;
+	    //copyVec3(&ray, &left);
 	
-	    for (int x = 0; x < width; x += 8) {
+    	for (int x = 0; x < width; x += 8) {
         
-        // Top right
+      	// Top right
 		    vec3 ray_tr;
-        ray_tr.x = ray.x + ((float)(x + 8) * delta_x);
-        ray_tr.y = ray.y + ((float)(x + 8) * delta_y);
-        ray_tr.z = ray.z + ((float)(x + 8) * delta_z);
+      	ray_tr.x = ray.x + ((float)(x + 8) * delta_x);
+      	ray_tr.y = ray.y + ((float)(x + 8) * delta_y);
+      	ray_tr.z = ray.z + ((float)(x + 8) * delta_z);
         
-        // Top left
-		    vec3 ray_tl;
-        ray_tl.x = ray.x + ((float)(x) * delta_x);
-        ray_tl.y = ray.y + ((float)(x) * delta_y);
-        ray_tl.z = ray.z + ((float)(x) * delta_z);
+      	// Top left
+	    	vec3 ray_tl;
+		    ray_tl.x = ray.x + ((float)(x) * delta_x);
+		    ray_tl.y = ray.y + ((float)(x) * delta_y);
+		    ray_tl.z = ray.z + ((float)(x) * delta_z);
         
-        // Bottom right
-		    vec3 ray_br; 
-        ray_br.x = left2.x + ((float)(x + 8) * delta_y_x);
-        ray_br.y = left2.y + ((float)(x + 8) * delta_y_y);
-        ray_br.z = left2.z + ((float)(x + 8) * delta_y_z);
+		    // Bottom right
+	    	vec3 ray_br; 
+		    ray_br.x = left2.x + ((float)(x + 8) * delta_y_x);
+		    ray_br.y = left2.y + ((float)(x + 8) * delta_y_y);
+		    ray_br.z = left2.z + ((float)(x + 8) * delta_y_z);
         
-        // Bottom left
-		    vec3 ray_bl;
-        ray_bl.x = left2.x + ((float)(x) * delta_y_x);
-        ray_bl.y = left2.y + ((float)(x) * delta_y_y);
-        ray_bl.z = left2.z + ((float)(x) * delta_y_z);
+		    // Bottom left
+	    	vec3 ray_bl;
+      	ray_bl.x = left2.x + ((float)(x) * delta_y_x);
+      	ray_bl.y = left2.y + ((float)(x) * delta_y_y);
+		    ray_bl.z = left2.z + ((float)(x) * delta_y_z);
 	      
 		    
-		    float depth_tr = 0.0f;
-		    float depth_tl = 0.0f;
-		    float depth_br = 0.0f;
-		    float depth_bl = 0.0f;
+	    	float depth_tr = 0.0f;
+	    	float depth_tl = 0.0f;
+	    	float depth_br = 0.0f;
+	    	float depth_bl = 0.0f;
 		
-		    uint32 u_tr = 0; uint32 v_tr = 0;
-		    uint32 u_tl = 0; uint32 v_tl = 0;
-		    uint32 u_br = 0; uint32 v_br = 0;
-		    uint32 u_bl = 0; uint32 v_bl = 0;
+	    	uint32 u_tr = 0; uint32 v_tr = 0;
+	    	uint32 u_tl = 0; uint32 v_tl = 0;
+	    	uint32 u_br = 0; uint32 v_br = 0;
+	    	uint32 u_bl = 0; uint32 v_bl = 0;
 		
-		    rayCalc(&ray_tr, &depth_tr, &u_tr, &v_tr);
-		    rayCalc(&ray_tl, &depth_tl, &u_tl, &v_tl);
-		    rayCalc(&ray_br, &depth_br, &u_br, &v_br);
-		    rayCalc(&ray_bl, &depth_bl, &u_bl, &v_bl);
+	    	rayCalc(&ray_tr, &depth_tr, &u_tr, &v_tr);
+	    	rayCalc(&ray_tl, &depth_tl, &u_tl, &v_tl);
+	    	rayCalc(&ray_br, &depth_br, &u_br, &v_br);
+	    	rayCalc(&ray_bl, &depth_bl, &u_bl, &v_bl);
 		
-		    float luminance_tr = (light_factor - abs(depth_tr)) / light_factor;
-		    if (luminance_tr <= 0.0f) {
-			    luminance_tr = 0.0f;
-		    }
-		    float luminance_tl = (light_factor - abs(depth_tl)) / light_factor;
-		    if (luminance_tl <= 0.0f) {
-			    luminance_tl = 0.0f;
-		    }
-		    float luminance_br = (light_factor - abs(depth_br)) / light_factor;
-		    if (luminance_br <= 0.0f) {
-			    luminance_br = 0.0f;
-		    }
-		    float luminance_bl = (light_factor - abs(depth_bl)) / light_factor;
-		    if (luminance_bl <= 0.0f) {
-			    luminance_bl = 0.0f;
-		    }
+	    	float luminance_tr = (light_factor - abs(depth_tr)) / light_factor;
+	    	if (luminance_tr <= 0.0f) {
+    		  luminance_tr = 0.0f;
+	    	}
+	    	float luminance_tl = (light_factor - abs(depth_tl)) / light_factor;
+	    	if (luminance_tl <= 0.0f) {
+		    	luminance_tl = 0.0f;
+	   	  }
+	    	float luminance_br = (light_factor - abs(depth_br)) / light_factor;
+	    	if (luminance_br <= 0.0f) {
+	    		luminance_br = 0.0f;
+	    	}
+	    	float luminance_bl = (light_factor - abs(depth_bl)) / light_factor;
+	    	if (luminance_bl <= 0.0f) {
+		    	luminance_bl = 0.0f;
+	    	}
 		
-		    float left_du = ((float)u_bl - (float)u_tl) / 8;
+		    float left_du = ((float)u_bl - (float)u_tl) / 8; // X / 8
 		    float left_dv = ((float)v_bl - (float)v_tl) / 8;
 		    float right_du = ((float)u_br - (float)u_tr) / 8;
 		    float right_dv = ((float)v_br - (float)v_tr) / 8;
-        
+
 		    float left_u = (float)u_tl;
 		    float left_v = (float)v_tl;
 		    float right_u = (float)u_tr;
 		    float right_v = (float)v_tr;
 		    
-		    float left_dlum = (luminance_bl - luminance_tl) / 8;
-		    float right_dlum = (luminance_br - luminance_tr) / 8;
+		    float left_dlum = (luminance_bl - luminance_tl) /8;
+		    float right_dlum = (luminance_br - luminance_tr) /8;
 		    float left_lum = luminance_tl;
 		    float right_lum = luminance_tr;
-		
+	
 		    float du = 0.0f, dv = 0.0f;
 		    uint32 u = 0, v = 0;
 		    float dlum = 0;
 		    float lum = 0;
 		
 		    for (int dy = 0; dy < 8; dy++) {
-			    du = (right_u - left_u) / 8;
-			    dv = (right_v - left_v) / 8;
+			    du = (right_u - left_u) /8;
+			    dv = (right_v - left_v) /8;
 			    u = (uint32)roundf(left_u);
 			    v = (uint32)roundf(left_v);
 			
-			    dlum = (right_lum - left_lum) / 8;
+			    dlum = (right_lum - left_lum) /8;
 			    lum = left_lum;
           
 			    for (int dx = 0; dx < 8; dx++) {
-			      	//printf("%u %u\n", u, v);
-			      	u &= 511;
-			      	v &= 511;
+		      	u &= 511;
+		      	v &= 511;
 			    	
-				uint32 color = GetPixel(u, v);
+				    uint32 color = GetPixel(u, v);
 
-			  	unsigned char color_r = (0x000000ff & color);
-			  	color_r  *= lum;
-			  	unsigned char color_g = (0x0000ff00 & color) >> 8;
-			  	color_g *= lum;
-			  	unsigned char color_b = (0x00ff0000 & color) >> 16;
-			  	color_b *= lum;
-			  	unsigned char color_a = (0xff000000 & color) >> 24; 
+			    	unsigned char color_r = (0x000000ff & color);
+			    	color_r  *= lum;
+			    	unsigned char color_g = (0x0000ff00 & color) >> 8;
+			    	color_g *= lum;
+			    	unsigned char color_b = (0x00ff0000 & color) >> 16;
+			    	color_b *= lum;
+			    	unsigned char color_a = (0xff000000 & color) >> 24; 
 				
-				color = (0xff000000 & (color_a << 24)) | 
-	                  	(0x00ff0000 & (color_b << 16)) |
-          			(0x0000ff00 & (color_g << 8))  |
-                  		(0x000000ff & (color_r));		
+				    color = (0xff000000 & (color_a << 24)) | 
+                	  (0x00ff0000 & (color_b << 16)) |
+          			    (0x0000ff00 & (color_g << 8))  |
+                		(0x000000ff & (color_r));		
 
 			    	PutPixel(color, x + dx, y + dy);
-				    
-			    	//u += du;
-			    	//v += dv;				    
+				    				    
 			    	u = (uint32)roundf((float)u + du);
 			    	v = (uint32)roundf((float)v + dv);
 				    
@@ -420,14 +425,11 @@ int main(int argc, char **argv) {
 			    left_lum += left_dlum;
 			    right_lum += right_dlum;
 		    }
-	    /*ray.x += 8.0f * delta_x;
-	      ray.y += 8.0f * delta_y;
-	      ray.z += 8.0f * delta_z; */ 
 	    }
     }
     //----- Update
 
-    ChronoShow ( "INNER LOOP", surface->w * surface->h);
+    //ChronoShow ( "INNER LOOP", surface->w * surface->h);
 
     //----- Draw
     CopyToSDL(surface->pixels, framebuffer, surface->w, surface->h, surface->pitch >> 2);
