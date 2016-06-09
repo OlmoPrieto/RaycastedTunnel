@@ -353,18 +353,18 @@ int main(int argc, char **argv) {
 			    luminance_bl = 0.0f;
 		    }
 		
-		    float left_du = ((float)u_bl - (float)u_tl) / 8.0f;
-		    float left_dv = ((float)v_bl - (float)v_tl) / 8.0f;
-		    float right_du = ((float)u_br - (float)u_tr) / 8.0f;
-		    float right_dv = ((float)v_br - (float)v_tr) / 8.0f;
+		    float left_du = ((float)u_bl - (float)u_tl) / 8;
+		    float left_dv = ((float)v_bl - (float)v_tl) / 8;
+		    float right_du = ((float)u_br - (float)u_tr) / 8;
+		    float right_dv = ((float)v_br - (float)v_tr) / 8;
         
 		    float left_u = (float)u_tl;
 		    float left_v = (float)v_tl;
 		    float right_u = (float)u_tr;
 		    float right_v = (float)v_tr;
 		    
-		    float left_dlum = (luminance_bl - luminance_tl) / 8.0f;
-		    float right_dlum = (luminance_br - luminance_tr) / 8.0f;
+		    float left_dlum = (luminance_bl - luminance_tl) / 8;
+		    float right_dlum = (luminance_br - luminance_tr) / 8;
 		    float left_lum = luminance_tl;
 		    float right_lum = luminance_tr;
 		
@@ -374,29 +374,42 @@ int main(int argc, char **argv) {
 		    float lum = 0;
 		
 		    for (int dy = 0; dy < 8; dy++) {
-			    du = (right_u - left_u) / 8.0f;
-			    dv = (right_v - left_v) / 8.0f;
+			    du = (right_u - left_u) / 8;
+			    dv = (right_v - left_v) / 8;
 			    u = (uint32)roundf(left_u);
 			    v = (uint32)roundf(left_v);
 			
-			    dlum = (right_lum - left_lum) / 8.0f;
+			    dlum = (right_lum - left_lum) / 8;
 			    lum = left_lum;
           
 			    for (int dx = 0; dx < 8; dx++) {
-			      //printf("%u %u\n", u, v);
-			      u &= 511;
-			      v &= 511;
-				    uint32 color = GetPixel(u, v);
-				    //color *= lum;
+			      	//printf("%u %u\n", u, v);
+			      	u &= 511;
+			      	v &= 511;
+			    	
+				uint32 color = GetPixel(u, v);
+
+			  	unsigned char color_r = (0x000000ff & color);
+			  	color_r  *= lum;
+			  	unsigned char color_g = (0x0000ff00 & color) >> 8;
+			  	color_g *= lum;
+			  	unsigned char color_b = (0x00ff0000 & color) >> 16;
+			  	color_b *= lum;
+			  	unsigned char color_a = (0xff000000 & color) >> 24; 
 				
-				    PutPixel(color, x + dx, y + dy);
+				color = (0xff000000 & (color_a << 24)) | 
+	                  	(0x00ff0000 & (color_b << 16)) |
+          			(0x0000ff00 & (color_g << 8))  |
+                  		(0x000000ff & (color_r));		
+
+			    	PutPixel(color, x + dx, y + dy);
 				    
-				    //u += du;
-				    //v += dv;				    
-				    u = (uint32)roundf((float)u + du);
-				    v = (uint32)roundf((float)v + dv);
+			    	//u += du;
+			    	//v += dv;				    
+			    	u = (uint32)roundf((float)u + du);
+			    	v = (uint32)roundf((float)v + dv);
 				    
-				    lum += dlum;
+			    	lum += dlum;
 			    }
 			
 			    left_u += left_du;
@@ -407,14 +420,14 @@ int main(int argc, char **argv) {
 			    left_lum += left_dlum;
 			    right_lum += right_dlum;
 		    }
-		    /*ray.x += 8.0f * delta_x;
+	    /*ray.x += 8.0f * delta_x;
 	      ray.y += 8.0f * delta_y;
 	      ray.z += 8.0f * delta_z; */ 
 	    }
     }
     //----- Update
 
-    //ChronoShow ( "INNER LOOP", surface->w * surface->h);
+    ChronoShow ( "INNER LOOP", surface->w * surface->h);
 
     //----- Draw
     CopyToSDL(surface->pixels, framebuffer, surface->w, surface->h, surface->pitch >> 2);
