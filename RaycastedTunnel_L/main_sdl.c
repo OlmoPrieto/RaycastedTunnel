@@ -114,21 +114,24 @@ static void rayCalc(vec3 *r, float *r_depth, uint32 *u, uint32 *v) {
 	  
 	  *r_depth = r->z * t;
 
-	  int _u = *r_depth;
-	  int _v = (angle * 511) / (PI * 2.0f);
+    // careful with roundf() !!
+	  uint32 _u = (uint32)roundf(*r_depth);
+	  uint32 _v = (uint32)roundf((angle * 511.0f) / (PI * 2.0f));
 
+    //*u = *r_depth;
+    //*v = (angle * 511.0f) / (PI * 2.0f);
+	  
 	  *u = abs(_u);
 
 	  if (_v < 0) {
-		*v = 511 - abs(_v);
+		  *v = 511 - abs(_v);
 	  } else {
-		*v = _v;
+		  *v = _v;
 	  }
 	  
 	  *u &= 511;
 	  *v &= 511;
 	}
-  //printf("%u - %u\n", *u, *v);
 }
 
 static inline vec3 lerp(vec3 *a, vec3 *b, float alpha) {
@@ -270,138 +273,137 @@ int main(int argc, char **argv) {
     ChronoWatchReset();
 
     // INNER LOOP
-for (int y = 0; y < height; y += 8) {
-	float alpha = (float)y / (float)height;
-      
-    vec3 left = lerp(&top_left_, &bottom_left_, alpha);
-    vec3 right = lerp(&top_right_, &bottom_right_, alpha);
-      
-	float delta_x = (right.x - left.x) / (float)width;
-  float delta_y = (right.y - left.y) / (float)width;
-  float delta_z = (right.z - left.z) / (float)width;
-	  
-  vec3 ray;
-  copyVec3(&ray, &left);
+    for (int y = 0; y < height; y += 8) {
+	    float alpha = (float)y / (float)height;
+          
+      vec3 left = lerp(&top_left_, &bottom_left_, alpha);
+      vec3 right = lerp(&top_right_, &bottom_right_, alpha);
+          
+	    float delta_x = (right.x - left.x) / (float)width;
+      float delta_y = (right.y - left.y) / (float)width;
+      float delta_z = (right.z - left.z) / (float)width;
+	      
+      vec3 ray = left;
+      //copyVec3(&ray, &left);
 	
-	for (int x = 0; x < width; x += 8) {
-    
-    // Top right
-		vec3 ray_tr; 
-    ray_tr.x = ray.x + ((x + 8) * delta_x); 
-    ray_tr.y = ray.y; 
-    ray_tr.z = ray.z;
+	    for (int x = 0; x < width; x += 8) {
+        
+        // Top right
+		    vec3 ray_tr; 
+        ray_tr.x = ray.x + ((float)(x + 8) * delta_x);
+        ray_tr.y = ray.y + ((float)(x + 0) * delta_y); 
+        ray_tr.z = ray.z + ((float)(x + 8) * delta_z);
 
-    // Top left
-		vec3 ray_tl;
-    ray_tl.x = ray.x + delta_x * x;
-    ray_tl.y = ray.y;
-    ray_tl.z = ray.z;
-    
-    // Bottom right
-		vec3 ray_br; 
-    ray_br.x = ray.x + ((x + 8) * delta_x);
-    ray_br.y = ray.y + (8 * delta_y);
-    ray_br.z = ray.z;
-    
-    // Bottom left
-		vec3 ray_bl; 
-    ray_bl.x = ray.x; 
-    ray_bl.y = ray.y + (8 * delta_y);
-    ray_bl.z = ray.z;
+        // Top left
+		    vec3 ray_tl;
+        ray_tl.x = ray.x + ((float)(x + 0) * delta_x);
+        ray_tl.y = ray.y + ((float)(x + 0) * delta_y);
+        ray_tl.z = ray.z + ((float)(x + 0) * delta_z);
+        
+        // Bottom right
+		    vec3 ray_br; 
+        ray_br.x = ray.x + ((float)(x + 8) * delta_x);
+        ray_br.y = ray.y + ((float)(x + 8) * delta_y);
+        ray_br.z = ray.z + ((float)(x + 8) * delta_z);
+        
+        // Bottom left
+		    vec3 ray_bl; 
+        ray_bl.x = ray.x + ((float)(x + 0) * delta_x); 
+        ray_bl.y = ray.y + ((float)(x + 8) * delta_y);
+        ray_bl.z = ray.z + ((float)(x + 4) * delta_z);
 		
-		float depth_tr = 0.0f;
-		float depth_tl = 0.0f;
-		float depth_br = 0.0f;
-		float depth_bl = 0.0f;
+		    float depth_tr = 0.0f;
+		    float depth_tl = 0.0f;
+		    float depth_br = 0.0f;
+		    float depth_bl = 0.0f;
 		
-		uint32 u_tr = 0; uint32 v_tr = 0;
-		uint32 u_tl = 0; uint32 v_tl = 0;
-		uint32 u_br = 0; uint32 v_br = 0;
-		uint32 u_bl = 0; uint32 v_bl = 0;
+		    uint32 u_tr = 0; uint32 v_tr = 0;
+		    uint32 u_tl = 0; uint32 v_tl = 0;
+		    uint32 u_br = 0; uint32 v_br = 0;
+		    uint32 u_bl = 0; uint32 v_bl = 0;
 		
-		rayCalc(&ray_tr, &depth_tr, &u_tr, &v_tr);
-		rayCalc(&ray_tl, &depth_tl, &u_tl, &v_tl);
-		rayCalc(&ray_br, &depth_br, &u_br, &v_br);
-		rayCalc(&ray_bl, &depth_bl, &u_bl, &v_bl);
+		    rayCalc(&ray_tr, &depth_tr, &u_tr, &v_tr);
+		    rayCalc(&ray_tl, &depth_tl, &u_tl, &v_tl);
+		    rayCalc(&ray_br, &depth_br, &u_br, &v_br);
+		    rayCalc(&ray_bl, &depth_bl, &u_bl, &v_bl);
 		
-		float luminance_tr = (light_factor - abs(depth_tr)) / light_factor;
-		if (luminance_tr <= 0) {
-			luminance_tr = 0.0f;
-		}
-		float luminance_tl = (light_factor - abs(depth_tl)) / light_factor;
-		if (luminance_tl <= 0) {
-			luminance_tl = 0.0f;
-		}
-		float luminance_br = (light_factor - abs(depth_br)) / light_factor;
-		if (luminance_br <= 0) {
-			luminance_br = 0.0f;
-		}
-		float luminance_bl = (light_factor - abs(depth_bl)) / light_factor;
-		if (luminance_bl <= 0) {
-			luminance_bl = 0.0f;
-		}
+		    float luminance_tr = (light_factor - abs(depth_tr)) / light_factor;
+		    if (luminance_tr <= 0.0f) {
+			    luminance_tr = 0.0f;
+		    }
+		    float luminance_tl = (light_factor - abs(depth_tl)) / light_factor;
+		    if (luminance_tl <= 0.0f) {
+			    luminance_tl = 0.0f;
+		    }
+		    float luminance_br = (light_factor - abs(depth_br)) / light_factor;
+		    if (luminance_br <= 0.0f) {
+			    luminance_br = 0.0f;
+		    }
+		    float luminance_bl = (light_factor - abs(depth_bl)) / light_factor;
+		    if (luminance_bl <= 0.0f) {
+			    luminance_bl = 0.0f;
+		    }
 		
-		uint32 left_du = abs(u_bl - u_tl) / 8;
-		uint32 left_dv = abs(v_bl - v_tl) / 8;
-		uint32 right_du = abs(u_br - u_tr) / 8;
-		uint32 right_dv = abs(v_br - v_tr) / 8;
-    
-		uint32 left_u = u_tl;
-		uint32 left_v = v_tl;
-		uint32 right_u = u_tr;
-		uint32 right_v = v_tr;
+		    float left_du = ((float)u_bl - (float)u_tl) / 8.0f;
+		    float left_dv = ((float)v_bl - (float)v_tl) / 8.0f;
+		    float right_du = ((float)u_br - (float)u_tr) / 8.0f;
+		    float right_dv = ((float)v_br - (float)v_tr) / 8.0f;
+        
+		    float left_u = (float)u_tl;
+		    float left_v = (float)v_tl;
+		    float right_u = (float)u_tr;
+		    float right_v = (float)v_tr;
+		    
+		    float left_dlum = (luminance_bl - luminance_tl) / 8.0f;
+		    float right_dlum = (luminance_br - luminance_tr) / 8.0f;
+		    float left_lum = luminance_tl;
+		    float right_lum = luminance_tr;
 		
-		uint32 left_dlum = abs(luminance_bl - luminance_tl) / 8;
-		uint32 right_dlum = abs(luminance_br - luminance_tr) / 8;
-		uint32 left_lum = luminance_tl;
-		uint32 right_lum = luminance_tr;
+		    float du = 0.0f, dv = 0.0f;
+		    uint32 u = 0, v = 0;
+		    float dlum = 0;
+		    float lum = 0;
 		
-		uint32 du = 0, dv = 0;
-		uint32 u = 0, v = 0;
-		uint32 dlum = 0;
-		uint32 lum = 0;
-		
-		for (int dy = 0; dy < 8; dy++) {
-			du = abs(right_u - left_u) / 8;
-			dv = abs(right_v - left_v) / 8;
-			u = left_u;
-			v = left_v;
+		    for (int dy = 0; dy < 8; dy++) {
+			    du = (right_u - left_u) / 8.0f;
+			    dv = (right_v - left_v) / 8.0f;
+			    u = (uint32)roundf(left_u);
+			    v = (uint32)roundf(left_v);
 			
-			dlum = abs(right_lum - left_lum) / 8;
-			lum = left_lum;
-  
-			for (int dx = 0; dx < 8; dx++) {
-				// read texture
-        // printf("%u - %u\n", u, v);
-        v &= 511;
-				uint32 color = GetPixel(u, v);
-				//color *= lum;
+			    dlum = (right_lum - left_lum) / 8.0f;
+			    lum = left_lum;
+          //printf("%f %f\n", left_u, left_v);
+			    for (int dx = 0; dx < 8; dx++) {
+			      //printf("%u %u\n", u, v);
+				    uint32 color = GetPixel(u, v);
+				    //color *= lum;
 				
-				PutPixel(color, x + dx, y + dy);
-				
-				u += du;
-				v += dv;
-				
-				lum += dlum;
-				
-				/*ray.x += delta_x;
-				ray.y += delta_y;
-				ray.z += delta_z;*/
-			}
+				    PutPixel(color, x + dx, y + dy);
+				    
+				    //u += du;
+				    //v += dv;
+				    
+				    //printf("%f %f\n", (float)u + du, (float)v + dv);
+				    
+				    u = (uint32)roundf((float)u + du);
+				    v = (uint32)roundf((float)v + dv);
+				    
+				    lum += dlum;
+			    }
 			
-			left_u += left_du;
-			left_v += left_dv;
-			right_u += right_du;
-			right_v += right_dv;
+			    left_u += left_du;
+			    left_v += left_dv;
+			    right_u += right_du;
+			    right_v += right_dv;
 			
-			left_lum += left_dlum;
-			right_lum += right_dlum;
-		}
-	}
-}
+			    left_lum += left_dlum;
+			    right_lum += right_dlum;
+		    }
+	    }
+    }
     //----- Update
 
-    ChronoShow ( "INNER LOOP", surface->w * surface->h);
+    //ChronoShow ( "INNER LOOP", surface->w * surface->h);
 
     //----- Draw
     CopyToSDL(surface->pixels, framebuffer, surface->w, surface->h, surface->pitch >> 2);
