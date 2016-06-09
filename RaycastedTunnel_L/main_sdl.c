@@ -117,10 +117,7 @@ static void rayCalc(vec3 *r, float *r_depth, uint32 *u, uint32 *v) {
     // careful with roundf() !!
 	  uint32 _u = (uint32)roundf(*r_depth);
 	  uint32 _v = (uint32)roundf((angle * 511.0f) / (PI * 2.0f));
-
-    //*u = *r_depth;
-    //*v = (angle * 511.0f) / (PI * 2.0f);
-	  
+ 
 	  *u = abs(_u);
 
 	  if (_v < 0) {
@@ -174,16 +171,14 @@ static void CopyToSDL (unsigned int *dst, unsigned int *src,
   }
 
 }
-static void ChronoShow (char* name, int computations)
-{
+static void ChronoShow (char* name, int computations){
   float ms = ChronoWatchReset();
   float cycles = ms * (1000000.0f/1000.0f) * (float)cpu_mhz;
   float cyc_per_comp = cycles / (float)computations;
   fprintf ( stdout, "%s: %f ms, %d cycles, %f cycles/iteration\n", name, ms, (int)cycles, cyc_per_comp);
 }
 
-static void LimitFramerate (int fps) 
-{  
+static void LimitFramerate (int fps) {  
   static unsigned int frame_time = 0;
   unsigned int t = GetMsTime();
   unsigned int elapsed = t - frame_time;
@@ -257,11 +252,8 @@ int main(int argc, char **argv) {
     last_time = delta_time;
     
     int x, y;
-    // mouse_pos.x = GETFROMWINDOW();
-    // mouse_pos.x /= half_width;
     SDL_GetMouseState(&x, &y);
-    
-    
+
     mouse_pos.x = x;
     mouse_pos.x /= half_width;
     mouse_pos.y = y;
@@ -361,7 +353,7 @@ int main(int argc, char **argv) {
 		    	luminance_bl = 0.0f;
 	    	}
 		
-		    float left_du = ((float)u_bl - (float)u_tl) / 8; // X / 8
+		    float left_du = ((float)u_bl - (float)u_tl) / 8;
 		    float left_dv = ((float)v_bl - (float)v_tl) / 8;
 		    float right_du = ((float)u_br - (float)u_tr) / 8;
 		    float right_dv = ((float)v_br - (float)v_tr) / 8;
@@ -371,8 +363,8 @@ int main(int argc, char **argv) {
 		    float right_u = (float)u_tr;
 		    float right_v = (float)v_tr;
 		    
-		    float left_dlum = (luminance_bl - luminance_tl) /8;
-		    float right_dlum = (luminance_br - luminance_tr) /8;
+		    float left_dlum = (luminance_bl - luminance_tl) / 8;
+		    float right_dlum = (luminance_br - luminance_tr) / 8;
 		    float left_lum = luminance_tl;
 		    float right_lum = luminance_tr;
 	
@@ -382,12 +374,12 @@ int main(int argc, char **argv) {
 		    float lum = 0;
 		
 		    for (int dy = 0; dy < 8; dy++) {
-			    du = (right_u - left_u) /8;
-			    dv = (right_v - left_v) /8;
+			    du = (right_u - left_u) / 8;
+			    dv = (right_v - left_v) / 8;
 			    u = (uint32)roundf(left_u);
 			    v = (uint32)roundf(left_v);
 			
-			    dlum = (right_lum - left_lum) /8;
+			    dlum = (right_lum - left_lum) / 8;
 			    lum = left_lum;
           
 			    for (int dx = 0; dx < 8; dx++) {
@@ -428,8 +420,7 @@ int main(int argc, char **argv) {
 	    }
     }
     //----- Update
-
-    //ChronoShow ( "INNER LOOP", surface->w * surface->h);
+    ChronoShow ("INNER LOOP", surface->w * surface->h);
 
     //----- Draw
     CopyToSDL(surface->pixels, framebuffer, surface->w, surface->h, surface->pitch >> 2);
@@ -447,8 +438,8 @@ int main(int argc, char **argv) {
         case SDL_MOUSEMOTION:
           break;
         case SDL_MOUSEBUTTONDOWN:
-          //printf("Mouse button %d pressed at (%d,%d)\n",
-          //   event.button.button, event.button.x, event.button.y);
+          // printf("Mouse button %d pressed at (%d,%d)\n",
+          // event.button.button, event.button.x, event.button.y);
           break;
         case SDL_QUIT:
           end = 1;
