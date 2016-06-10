@@ -141,29 +141,26 @@ static void ChronoShow (char* name, int computations){
   fprintf ( stdout, "%s: %f ms, %d cycles, %f cycles/iteration\n", name, ms, (int)cycles, cyc_per_comp);
 }
 
+// HOTSPOT: 4 calls per x loop, 4 * width / 8 calls per y loop
 static void rayCalc(vec3 *r, float *r_depth, uint32 *u, uint32 *v) {
 	float vec_len = sqrt(r->x * r->x + r->y * r->y);
 	if (vec_len != 0.0f) {
 	  float t = cylinder_radius / vec_len;
 	
 	  float angle = atan2(r->x, r->y);
-	  
+    
 	  *r_depth = r->z * t;
 
     // careful with roundf() !!
-	  uint32 _u = (uint32)roundf(*r_depth);
-	  uint32 _v = (uint32)roundf((angle * 511.0f) * inverse2PI);
- 
-	  *u = abs(_u);
-
-	  if (_v < 0) {
-		  *v = 511 - abs(_v);
-	  } else {
-		  *v = _v;
-	  }
-	  //*v = abs(_v);
-	  
-	  *u &= 511;
+	  //uint32 _u = (uint32)roundf(*r_depth);
+	  //uint32 _v = (uint32)roundf((angle * 511.0f) * inverse2PI);
+    uint32 _u = (uint32)(*r_depth);
+	  uint32 _v = (uint32)((angle * 511.0f) * inverse2PI);
+    
+	  *u = abs(_u); // abs for rays that go backwards
+		*v = _v;
+	  	  
+	  //*u &= 511;
 	  *v &= 511;
 	}
 }
@@ -271,11 +268,14 @@ static void InnerLoop(inner_loop_params *params) {
       float dlum = 0.0f;
       float lum = 0.0f;
       
+      // HOTSPOT: 64 iterations each x loop, 64 * width / 8 iterations each y loop
       for (int dy = 0; dy < 8; dy++) {
 	      du = (right_u - left_u) * 0.125f;
 	      dv = (right_v - left_v) * 0.125f;
-	      u = (uint32)roundf(left_u);
-	      v = (uint32)roundf(left_v);
+	      //u = (uint32)roundf(left_u);
+	      //v = (uint32)roundf(left_v);
+	      u = (uint32)left_u;
+	      v = (uint32)left_v;
 	
 	      dlum = (right_lum - left_lum) * 0.125f;
 	      lum = left_lum;
@@ -424,7 +424,7 @@ int main(int argc, char **argv) {
     float delta_time = SDL_GetTicks() / 1000;
     last_time = delta_time;
     
-    int x, y;
+    int x = 0, y = 0;
     SDL_GetMouseState(&x, &y);
 
     mouse_pos.x = x;
