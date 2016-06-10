@@ -134,6 +134,13 @@ static inline void PutPixel(uint32 color, uint32 x, uint32 y) {
   framebuffer[x + width * y] = color;
 }
 
+static void ChronoShow (char* name, int computations){
+  float ms = ChronoWatchReset();
+  float cycles = ms * (1000000.0f/1000.0f) * (float)cpu_mhz;
+  float cyc_per_comp = cycles / (float)computations;
+  fprintf ( stdout, "%s: %f ms, %d cycles, %f cycles/iteration\n", name, ms, (int)cycles, cyc_per_comp);
+}
+
 static void rayCalc(vec3 *r, float *r_depth, uint32 *u, uint32 *v) {
 	float vec_len = sqrt(r->x * r->x + r->y * r->y);
 	if (vec_len != 0.0f) {
@@ -244,7 +251,7 @@ static void InnerLoop(inner_loop_params *params) {
     	if (luminance_bl <= 0.0f) {
       	luminance_bl = 0.0f;
     	}
-
+        
       float left_du = ((float)u_bl - (float)u_tl) * 0.125f;
       float left_dv = ((float)v_bl - (float)v_tl) * 0.125f;
       float right_du = ((float)u_br - (float)u_tr) * 0.125f;
@@ -264,7 +271,7 @@ static void InnerLoop(inner_loop_params *params) {
       uint32 u = 0, v = 0;
       float dlum = 0.0f;
       float lum = 0.0f;
-
+      
       for (int dy = 0; dy < 8; dy++) {
 	      du = (right_u - left_u) * 0.125f;
 	      dv = (right_v - left_v) * 0.125f;
@@ -281,11 +288,11 @@ static void InnerLoop(inner_loop_params *params) {
 		      uint32 color = GetPixel(u, v);
 
 	      	unsigned char color_r = (0x000000ff & color);
-	      	color_r  *= lum;
+	      	color_r  = (unsigned char)((float)color_r * lum);
 	      	unsigned char color_g = (0x0000ff00 & color) >> 8;
-	      	color_g *= lum;
+	      	color_g = (unsigned char)((float)color_g * lum);
 	      	unsigned char color_b = (0x00ff0000 & color) >> 16;
-	      	color_b *= lum;
+	      	color_b = (unsigned char)((float)color_b * lum);
 	      	unsigned char color_a = (0xff000000 & color) >> 24; 
 		
 		      color = (0xff000000 & (color_a << 24)) | 
@@ -334,12 +341,6 @@ static void CopyToSDL (unsigned int *dst, unsigned int *src,
     memcpy(dst_line, src_line, w * sizeof(uint32));
   }
 
-}
-static void ChronoShow (char* name, int computations){
-  float ms = ChronoWatchReset();
-  float cycles = ms * (1000000.0f/1000.0f) * (float)cpu_mhz;
-  float cyc_per_comp = cycles / (float)computations;
-  fprintf ( stdout, "%s: %f ms, %d cycles, %f cycles/iteration\n", name, ms, (int)cycles, cyc_per_comp);
 }
 
 static void LimitFramerate (int fps) {  
