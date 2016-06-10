@@ -295,9 +295,9 @@ static void InnerLoop(inner_loop_params *params) {
 	      	unsigned char color_a = (0xff000000 & color) >> 24; 
 		
 		      color = (0xff000000 & (color_a << 24)) | 
-              	  (0x00ff0000 & (color_b << 16)) |
-        			    (0x0000ff00 & (color_g << 8))  |
-              		(0x000000ff & (color_r));		
+              	       (0x00ff0000 & (color_b << 16)) |
+        			         (0x0000ff00 & (color_g << 8))  |
+              		     (0x000000ff & (color_r));		
 
 	      	PutPixel(color, x + dx, y + dy);
 		      				    
@@ -460,7 +460,7 @@ int main(int argc, char **argv) {
     ChronoWatchReset();
     //----- Draw
     CopyToSDL(surface->pixels, framebuffer, surface->w, surface->h, surface->pitch >> 2);
-    //ChronoShow ("CopyToSDL", surface->w * surface->h);
+    ChronoShow ("CopyToSDL", surface->w * surface->h);
     
     SDL_UnlockSurface(surface);
     SDL_Flip(surface);
