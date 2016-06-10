@@ -183,8 +183,7 @@ static void InnerLoop(inner_loop_params *params) {
     float alpha2 = ((float)y + 8.0f) * params->inverse_height;     
       
     vec3 left2 = lerp(params->tl, params->bl, alpha2);
-    vec3 right2 = lerp(params->tr, params->br, alpha2);
-    
+    vec3 right2 = lerp(params->tr, params->br, alpha2);  
     
     float delta_y_x = (right2.x - left2.x) * params->inverse_width;
 	  float delta_y_y = (right2.y - left2.y) * params->inverse_width;
@@ -288,7 +287,7 @@ static void InnerLoop(inner_loop_params *params) {
 		      uint32 color = GetPixel(u, v);
 
 	      	unsigned char color_r = (0x000000ff & color);
-	      	color_r  = (unsigned char)((float)color_r * lum);
+	      	color_r = (unsigned char)((float)color_r * lum);
 	      	unsigned char color_g = (0x0000ff00 & color) >> 8;
 	      	color_g = (unsigned char)((float)color_g * lum);
 	      	unsigned char color_b = (0x00ff0000 & color) >> 16;
@@ -381,6 +380,9 @@ int main(int argc, char **argv) {
   uint32 half_width = width / 2;
   //uint32 half_height = height / 2;
   vec3 mouse_pos;
+  mouse_pos.x = 0.0f;
+  mouse_pos.y = 0.0f;
+  mouse_pos.z = 0.0f;
   
   mat3 rotation;
   float fov_r = gradesToRadians(fov * 0.5f);
